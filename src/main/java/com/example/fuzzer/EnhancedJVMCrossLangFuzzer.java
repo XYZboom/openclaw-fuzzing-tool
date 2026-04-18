@@ -3,7 +3,7 @@ package com.example.fuzzer;
 import com.example.fuzzer.generators.KotlinGenerator;
 import com.example.fuzzer.generators.ScalaGenerator;
 import com.example.fuzzer.defects.CrossLangDefectDetector;
-import com.example.fuzzer.execution.TestCaseRunner;
+import com.example.fuzzer.execution.RealCompilerTestCaseRunner;
 import com.example.fuzzer.model.TestCase;
 import com.example.fuzzer.model.TestCaseResult;
 
@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 /**
  * Enhanced version of the JVM Cross-Language Fuzz Testing Tool.
  * This version generates more complex test cases with advanced language features
- * and better defect detection capabilities.
+ * and better defect detection capabilities using real compilers.
  */
 public class EnhancedJVMCrossLangFuzzer {
     private static final Logger logger = Logger.getLogger(EnhancedJVMCrossLangFuzzer.class.getName());
@@ -23,7 +23,7 @@ public class EnhancedJVMCrossLangFuzzer {
     private final KotlinGenerator kotlinGenerator;
     private final ScalaGenerator scalaGenerator;
     private final CrossLangDefectDetector defectDetector;
-    private final TestCaseRunner testCaseRunner;
+    private final RealCompilerTestCaseRunner testCaseRunner;
     private final File outputDirectory;
     private final int maxTestCases;
     
@@ -35,7 +35,7 @@ public class EnhancedJVMCrossLangFuzzer {
         this.kotlinGenerator = new KotlinGenerator();
         this.scalaGenerator = new ScalaGenerator();
         this.defectDetector = new CrossLangDefectDetector();
-        this.testCaseRunner = new TestCaseRunner();
+        this.testCaseRunner = new RealCompilerTestCaseRunner();
         
         if (!outputDirectory.exists()) {
             outputDirectory.mkdirs();
@@ -81,6 +81,8 @@ public class EnhancedJVMCrossLangFuzzer {
         } catch (Exception e) {
             logger.severe("Fatal error during enhanced fuzzing: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            testCaseRunner.shutdown();
         }
     }
     

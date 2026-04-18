@@ -1,0 +1,41 @@
+Language Pair: scala-java
+Test Case ID: enhanced_sc_java_1776502520871_7
+Defect Detected: true
+Success: false
+Message: Scala-Java compilation failed: Implicits.scala:9: error: type mismatch;
+ found   : String("hello")
+ required: ?{def reversed: ?}
+Note that implicit conversions are not applicable because they are ambiguous:
+ both method augmentString in object Predef of type (x: String)scala.collection.immutable.StringOps
+ and method StringOps in object Implicits of type (s: String)Implicits.StringOps
+ are possible conversion functions from String("hello") to ?{def reversed: ?}
+  println("hello".reversed)
+          ^
+Implicits.scala:9: error: value reversed is not a member of String
+  println("hello".reversed)
+                  ^
+two errors found
+
+=== SOURCE CODE ===
+
+=== StringUtils.java ===
+public class StringUtils {
+    public static String reverse(String s) {
+        return new StringBuilder(s).reverse().toString();
+    }
+}
+
+
+=== Implicits.scala ===
+object Implicits {
+  implicit class StringOps(s: String) {
+    def reversed: String = StringUtils.reverse(s)
+  }
+}
+
+object Main extends App {
+  import Implicits._
+  println("hello".reversed)
+}
+
+

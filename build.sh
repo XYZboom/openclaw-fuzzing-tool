@@ -6,14 +6,13 @@ echo "========================================="
 # Create build directory
 mkdir -p build/classes
 
-# Compile only the working source files (basic version + enhanced main)
+# Compile all source files
 echo "Compiling JVM Cross-Language Fuzzer..."
 javac -d build/classes \
     src/main/java/com/example/fuzzer/model/*.java \
-    src/main/java/com/example/fuzzer/defects/CrossLangDefectDetector.java \
-    src/main/java/com/example/fuzzer/execution/TestCaseRunner.java \
-    src/main/java/com/example/fuzzer/generators/KotlinGenerator.java \
-    src/main/java/com/example/fuzzer/generators/ScalaGenerator.java \
+    src/main/java/com/example/fuzzer/defects/*.java \
+    src/main/java/com/example/fuzzer/execution/*.java \
+    src/main/java/com/example/fuzzer/generators/*.java \
     src/main/java/com/example/fuzzer/JVMCrossLangFuzzer.java \
     src/main/java/com/example/fuzzer/EnhancedJVMCrossLangFuzzer.java
 

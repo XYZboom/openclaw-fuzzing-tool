@@ -1,238 +1,218 @@
-# JVM Cross-Language Fuzzer Usage Guide
+# JVM Cross-Language Fuzz Testing Tool - Usage Guide
 
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-2. [Building the Tool](#building-the-tool)
-3. [Running the Fuzzer](#running-the-fuzzer)
-4. [Command Line Options](#command-line-options)
-5. [Understanding Output](#understanding-output)
-6. [Customizing Test Generation](#customizing-test-generation)
-7. [Defect Detection](#defect-detection)
-8. [Troubleshooting](#troubleshooting)
+## Overview
 
-## Prerequisites
+This tool is designed to detect compiler defects and interoperability issues between JVM languages, specifically focusing on Kotlin-Java and Scala-Java combinations. It generates random but valid cross-language code combinations, compiles them, executes them, and monitors for unexpected behaviors that indicate compiler bugs.
 
-Before using the JVM Cross-Language Fuzzer, ensure you have the following installed:
+## Installation Requirements
 
-- **Java 8 or higher** - Required for running the fuzzer
-- **Kotlin compiler (kotlinc)** - Required for Kotlin-Java interoperability testing
-- **Scala compiler (scalac)** - Required for Scala-Java interoperability testing
-- **Sufficient disk space** - Test cases and output can consume significant space during extended fuzzing sessions
+- **Java 8 or higher** (required)
+- **Kotlin compiler** (`kotlinc`) - for Kotlin-Java testing
+- **Scala compiler** (`scalac`) - for Scala-Java testing  
+- **Maven or Gradle** (optional, for building from source)
 
-### Installing Compilers
+> **Note**: The tool will work in basic mode with just Java, but to test actual Kotlin-Java and Scala-Java interoperability, you need the respective compilers installed.
 
-**Kotlin:**
-```bash
-# Using SDKMAN! (recommended)
-sdk install kotlin
+## Basic Usage
 
-# Or download from https://github.com/JetBrains/kotlin/releases
-```
-
-**Scala:**
-```bash
-# Using SDKMAN!
-sdk install scala
-
-# Or download from https://www.scala-lang.org/download/
-```
-
-## Building the Tool
-
-The fuzzer includes a simple build script that compiles all source files and creates a JAR:
+### Building the Tool
 
 ```bash
+# Clone the repository
+git clone <repository-url>
 cd jvm-cross-lang-fuzzer
+
+# Build the tool
 ./build.sh
+
+# This creates build/jvm-cross-lang-fuzzer.jar
 ```
 
-This will:
-- Compile all Java source files
-- Create a `build/` directory
-- Generate `jvm-cross-lang-fuzzer.jar`
-
-The build script automatically handles classpath and dependency management.
-
-## Running the Fuzzer
-
-### Basic Usage
+### Running Basic Fuzz Testing
 
 ```bash
+# Run with default settings (1000 test cases, output to fuzz-output/)
 ./run.sh
+
+# Run with custom parameters
+./run.sh --output /path/to/output --test-cases 5000 --verbose
 ```
 
-This runs the fuzzer with default settings:
-- Output directory: `fuzz-output/`
-- Maximum test cases: 1000
-- Verbose logging: disabled
+### Command Line Options
 
-### Custom Parameters
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-o, --output DIR` | Output directory for test cases and defect reports | `fuzz-output/` |
+| `-n, --test-cases N` | Maximum number of test cases to generate | `1000` |
+| `-v, --verbose` | Enable verbose logging | `false` |
+| `-h, --help` | Show help message | |
+
+## Enhanced Usage
+
+The enhanced version generates more complex test cases that exercise advanced language features:
+
+### Running Enhanced Fuzz Testing
 
 ```bash
-java -jar build/jvm-cross-lang-fuzzer.jar \
-  --output /path/to/output \
-  --max-test-cases 5000 \
-  --verbose
+# Build enhanced version
+./build.sh --enhanced
+
+# Run enhanced fuzzing
+java -cp build/jvm-cross-lang-fuzzer.jar com.example.fuzzer.EnhancedJVMCrossLangFuzzer \
+    --output fuzz-output-enhanced \
+    --test-cases 100
 ```
 
-## Command Line Options
+### Enhanced Features Tested
 
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--output` | `-o` | Output directory for test cases and reports | `fuzz-output` |
-| `--max-test-cases` | `-n` | Maximum number of test cases to generate | `1000` |
-| `--verbose` | `-v` | Enable verbose logging | `false` |
-| `--help` | `-h` | Show help message | N/A |
+#### Kotlin-Java Interoperability
+- **Nullable types and platform types**: Tests Kotlin's null safety with Java's nullable references
+- **Generics and variance**: Exercises type variance and generic interoperability
+- **SAM conversions**: Tests functional interface compatibility
+- **Extension functions**: Validates extension function calls from Java contexts
+- **Operator overloading**: Checks operator resolution across language boundaries
+
+#### Scala-Java Interoperability  
+- **Case classes and pattern matching**: Tests Scala case classes used from Java
+- **Implicit conversions**: Exercises Scala implicits with Java types
+- **Traits and mixin composition**: Validates trait inheritance with Java interfaces
+- **Type classes**: Tests ad-hoc polymorphism across language boundaries
+- **Varargs and default parameters**: Checks parameter handling compatibility
 
 ## Understanding Output
 
 ### Directory Structure
 
-After running, the output directory contains:
-
 ```
 fuzz-output/
-├── defects/           # Defective test cases (if any found)
-├── test-cases/        # All generated test cases
-├── logs/              # Execution logs
-└── summary.json       # Summary report
+├── defects/                    # Defective test cases (if any found)
+│   ├── kotlin-java_defect_*.txt
+│   └── scala-java_defect_*.txt
+├── test-cases/                 # Generated test cases (debug mode)
+└── logs/                       # Execution logs
 ```
-
-### Log Messages
-
-- **INFO**: Normal operation messages
-- **WARNING**: Non-critical issues (e.g., compilation warnings)
-- **SEVERE**: Potential defects detected
 
 ### Defect Reports
 
-When a defect is detected, a report file is created in `defects/` containing:
-- Language pair (kotlin-java or scala-java)
-- Test case ID
-- Compilation/execution results
-- Full source code of the defective test case
+When a defect is detected, a detailed report is saved containing:
+- Language pair being tested
+- Test case ID and timestamp
+- Defect classification (compilation error, runtime crash, semantic inconsistency)
+- Complete source code of the defective test case
+- Compiler/runtime error messages
 
-## Customizing Test Generation
+## Defect Detection Capabilities
 
-The fuzzer generates random but syntactically valid cross-language code. You can influence generation by:
+The tool can detect several types of compiler defects:
 
-### Modifying Generators
+### 1. Compilation Crashes
+- Compiler segfaults or internal errors
+- Unexpected compilation failures on valid code
+- Stack overflow during compilation
 
-The test case generators are located in:
-- `src/main/java/com/example/fuzzer/generators/KotlinGenerator.java`
-- `src/main/java/com/example/fuzzer/generators/ScalaGenerator.java`
+### 2. Semantic Inconsistencies  
+- Different behavior between languages for equivalent code
+- Type system violations that should be caught at compile time
+- Incorrect code generation leading to runtime errors
 
-You can modify these to:
-- Add new language features to test
-- Focus on specific interoperability scenarios
-- Increase/decrease complexity of generated code
+### 3. Runtime Defects
+- Unexpected exceptions during execution
+- Memory leaks or resource exhaustion
+- Incorrect results from cross-language method calls
 
-### Adding New Language Pairs
+### 4. Interoperability Issues
+- Missing or incorrect bridge methods
+- Incorrect null handling
+- Generic type erasure problems
+- Visibility and access control issues
 
-To add support for additional JVM language combinations:
+## Integration with CI/CD
 
-1. Create a new generator class extending the base generator pattern
-2. Update `JVMCrossLangFuzzer.java` to include your generator
-3. Update the build script if necessary
+You can integrate this tool into your continuous integration pipeline:
 
-## Defect Detection
+```yaml
+# GitHub Actions example
+- name: Run JVM Cross-Language Fuzz Testing
+  run: |
+    cd jvm-cross-lang-fuzzer
+    ./build.sh
+    ./run.sh --test-cases 1000
+    
+    # Fail if any defects were found
+    if [ -d "fuzz-output/defects" ] && [ "$(ls -A fuzz-output/defects)" ]; then
+      echo "Defects found! Check fuzz-output/defects/"
+      exit 1
+    fi
+```
 
-The fuzzer detects defects through several mechanisms:
+## Performance Considerations
 
-### Compilation Defects
-- Unexpected compilation failures
-- Compiler crashes
-- Inconsistent error messages between languages
+- **Memory Usage**: Each test case runs in isolation, so memory usage scales with parallelism
+- **Execution Time**: Complex test cases take longer to compile and execute
+- **Disk Space**: Test cases and defect reports are saved to disk (can be disabled)
 
-### Runtime Defects
-- Unexpected runtime exceptions
-- Different behavior between equivalent implementations
-- Memory leaks or performance issues
+### Optimization Tips
 
-### Semantic Inconsistencies
-- Same code producing different results in different language contexts
-- Type system inconsistencies
-- Method resolution differences
+1. **Reduce test case count** for quick validation: `--test-cases 100`
+2. **Disable verbose logging** in production runs: omit `--verbose`
+3. **Use parallel execution** by running multiple instances with different output directories
+4. **Clean up old outputs** regularly to save disk space
 
 ## Troubleshooting
 
 ### Common Issues
 
-**"Command not found: kotlinc"**
-- Install Kotlin compiler as described in prerequisites
+#### "Command not found: kotlinc/scalac"
+- **Solution**: Install Kotlin and Scala compilers
+  ```bash
+  # Ubuntu/Debian
+  sudo apt-get install kotlin scala
+  
+  # macOS (with Homebrew)  
+  brew install kotlin scala
+  
+  # Manual installation
+  # Download from https://kotlinlang.org/ and https://www.scala-lang.org/
+  ```
 
-**"Command not found: scalac"**
-- Install Scala compiler as described in prerequisites
+#### "Permission denied" on build/run scripts
+- **Solution**: Make scripts executable
+  ```bash
+  chmod +x build.sh run.sh
+  ```
 
-**"Permission denied" on build/run scripts**
-- Make scripts executable: `chmod +x build.sh run.sh`
+#### Java version compatibility issues
+- **Solution**: Ensure Java 8+ is installed and `JAVA_HOME` is set correctly
 
-**"Out of memory" errors**
-- Increase JVM heap size: `export JAVA_OPTS="-Xmx4g"`
-
-### Debugging Defective Test Cases
+### Debugging Defects
 
 When a defect is found:
-1. Examine the defect report in `fuzz-output/defects/`
-2. Reproduce manually using the provided source code
-3. Verify the defect is consistent and not environment-specific
-4. Report to the appropriate compiler team with the minimal reproducer
 
-### Performance Optimization
-
-For large-scale fuzzing:
-- Use SSD storage for faster I/O
-- Increase available RAM
-- Consider running multiple instances with different seed values
-- Monitor disk space usage during extended sessions
-
-## Advanced Usage
-
-### Integration with CI/CD
-
-You can integrate the fuzzer into your continuous integration pipeline:
-
-```yaml
-# GitHub Actions example
-- name: Run JVM Cross-Language Fuzzer
-  run: |
-    cd jvm-cross-lang-fuzzer
-    ./build.sh
-    ./run.sh --max-test-cases 100
-    # Fail build if defects found
-    if [ -d "fuzz-output/defects" ] && [ "$(ls -A fuzz-output/defects)" ]; then
-      echo "Defects found!" >&2
-      exit 1
-    fi
-```
-
-### Automated Bug Reporting
-
-The fuzzer can be extended to automatically report bugs to issue trackers by:
-1. Parsing defect reports
-2. Creating standardized bug reports
-3. Submitting via API to compiler project issue trackers
-
-### Fuzzing Campaigns
-
-For systematic testing:
-- Run multiple sessions with different parameters
-- Track defect discovery over time
-- Correlate findings with compiler versions
-- Build a database of known interoperability issues
+1. **Examine the defect report** in `fuzz-output/defects/`
+2. **Reproduce manually** by compiling the source code directly
+3. **Simplify the test case** to create a minimal reproducer
+4. **Report to compiler maintainers** with the minimal reproducer
 
 ## Contributing
 
-Contributions are welcome! Consider:
-- Adding support for additional JVM languages
-- Improving test case generation algorithms
-- Enhancing defect detection heuristics
-- Adding new output formats or integrations
+To extend the tool with new language features or defect detection patterns:
+
+1. **Add new generators** in `src/main/java/com/example/fuzzer/generators/`
+2. **Extend defect detectors** in `src/main/java/com/example/fuzzer/defects/`
+3. **Update the IR model** in `src/main/java/com/example/fuzzer/ir/` for complex scenarios
+4. **Add test cases** in `src/test/java/` to validate new functionality
 
 ## License
 
-This tool is provided under the MIT License. See LICENSE file for details.
+This tool is provided under the MIT License. See `LICENSE` file for details.
+
+## Support
+
+For issues, feature requests, or questions:
+- Open an issue on the GitHub repository
+- Contact the maintainers via email
+- Join the discussion forum/community
 
 ---
 
-**Note**: This fuzzer is designed to find compiler and runtime defects. Always verify findings before reporting bugs to compiler teams.
+**Remember**: The effectiveness of fuzz testing increases with the complexity and diversity of generated test cases. Regular updates to include new language features and edge cases will improve defect detection capabilities over time.

@@ -59,6 +59,10 @@ public class KotlinGenerator {
     private final CrossLangDefectDetector defectDetector;
     private int testCaseCounter = 0;
     
+    public KotlinGenerator() {
+        this.defectDetector = null; // Not used in current implementation
+    }
+    
     public KotlinGenerator(CrossLangDefectDetector defectDetector) {
         this.defectDetector = defectDetector;
     }

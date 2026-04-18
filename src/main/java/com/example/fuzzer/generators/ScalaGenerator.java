@@ -65,6 +65,10 @@ public class ScalaGenerator {
     private final CrossLangDefectDetector defectDetector;
     private int testCaseCounter = 0;
     
+    public ScalaGenerator() {
+        this.defectDetector = new CrossLangDefectDetector();
+    }
+    
     public ScalaGenerator(CrossLangDefectDetector defectDetector) {
         this.defectDetector = defectDetector;
     }
